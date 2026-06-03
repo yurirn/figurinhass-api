@@ -17,16 +17,23 @@ export function verifyToken(token) {
   return jwt.verify(token, JWT_SECRET);
 }
 
-export function setAuthCookie(res, token) {
-  res.cookie("token", token, {
+function cookieOptions() {
+  const domain = process.env.COOKIE_DOMAIN?.trim();
+  const opts = {
     httpOnly: true,
     secure: process.env.COOKIE_SECURE === "true",
-    sameSite: "lax",
+    sameSite: process.env.COOKIE_SAMESITE === "none" ? "none" : "lax",
     maxAge: 1000 * 60 * 60 * 24 * 30,
-    domain: process.env.COOKIE_DOMAIN || undefined,
     path: "/",
-  });
+  };
+  // domain vazio ou de outro site quebra Set-Cookie ("option domain is invalid")
+  if (domain) opts.domain = domain;
+  return opts;
+}
+
+export function setAuthCookie(res, token) {
+  res.cookie("token", token, cookieOptions());
 }
 export function clearAuthCookie(res) {
-  res.clearCookie("token", { path: "/" });
+  res.clearCookie("token", cookieOptions());
 }
