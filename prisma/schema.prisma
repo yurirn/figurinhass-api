@@ -1,0 +1,105 @@
+// Tracker Panini — schema separando catálogo de progresso
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  albums       Album[]
+}
+
+// =================================================================
+// CATÁLOGO (estrutura do álbum: o que existe)
+// =================================================================
+model Album {
+  id        String   @id @default(cuid())
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name      String
+  slug      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sections  Section[]
+  groups    Group[]
+
+  @@unique([ownerId, slug])
+  @@index([ownerId])
+}
+
+model Section {
+  id        String   @id @default(cuid())
+  albumId   String
+  album     Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  key       String   // intro, venues, legends, cocacola, ou custom
+  name      String
+  count     Int      // quantidade de figurinhas
+  start     Int      @default(1) // número da 1ª figurinha
+  position  Int      @default(0) // 0..N = pre-grupos; >=1000 = pós-grupos
+  isPostGroup Boolean @default(false) // true = renderiza após grupos (cocacola)
+
+  progress  StickerProgress[]
+
+  @@unique([albumId, key])
+  @@index([albumId])
+}
+
+model Group {
+  id        String   @id @default(cuid())
+  albumId   String
+  album     Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  letter    String   // A, B, C, ...
+  position  Int      @default(0)
+  teams     Team[]
+
+  @@unique([albumId, letter])
+  @@index([albumId])
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name      String   // "Brasil - BRA"
+  code      String?  // "BRA" (3 letras, para flag)
+  count     Int      @default(20)
+  start     Int      @default(1)
+  position  Int      @default(0)
+
+  progress  StickerProgress[]
+
+  @@index([groupId])
+}
+
+// =================================================================
+// PROGRESSO (esparso — só linhas para figurinhas marcadas)
+// =================================================================
+model StickerProgress {
+  id          String   @id @default(cuid())
+  // exatamente UM dos dois é preenchido:
+  sectionId   String?
+  section     Section? @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  teamId      String?
+  team        Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  num         Int      // índice interno (1..count)
+  owned       Boolean  @default(false)
+  duplicates  Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  @@unique([sectionId, num])
+  @@unique([teamId, num])
+  @@index([sectionId])
+  @@index([teamId])
+}
