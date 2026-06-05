@@ -8,7 +8,7 @@ export async function requireAuth(req, res, next) {
     const payload = verifyToken(token);
     const user = await prisma.user.findUnique({ where: { id: payload.uid } });
     if (!user) return res.status(401).json({ error: "Usuário não encontrado" });
-    req.user = { id: user.id, email: user.email, name: user.name };
+    req.user = { id: user.id, email: user.email, username: user.username, name: user.name };
     next();
   } catch (e) {
     res.status(401).json({ error: "Token inválido" });

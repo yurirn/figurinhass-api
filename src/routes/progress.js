@@ -108,4 +108,77 @@ router.get("/album/:albumId", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+async function loadOwnedAlbum(req, albumId) {
+  return prisma.album.findUnique({
+    where: { id: albumId },
+    include: {
+      sections: true,
+      groups: { include: { teams: true } },
+    },
+  });
+}
+
+// POST /progress/album/:albumId/reset — apaga todo o progresso
+router.post("/album/:albumId/reset", async (req, res, next) => {
+  try {
+    const album = await loadOwnedAlbum(req, req.params.albumId);
+    if (!album || album.ownerId !== req.user.id) {
+      return res.status(404).json({ error: "Álbum não encontrado" });
+    }
+
+    const sectionIds = album.sections.map((s) => s.id);
+    const teamIds = album.groups.flatMap((g) => g.teams.map((t) => t.id));
+
+    await prisma.$transaction([
+      prisma.stickerProgress.deleteMany({ where: { sectionId: { in: sectionIds } } }),
+      prisma.stickerProgress.deleteMany({ where: { teamId: { in: teamIds } } }),
+    ]);
+
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+// POST /progress/album/:albumId/complete — marca tudo como tenho
+router.post("/album/:albumId/complete", async (req, res, next) => {
+  try {
+    const album = await loadOwnedAlbum(req, req.params.albumId);
+    if (!album || album.ownerId !== req.user.id) {
+      return res.status(404).json({ error: "Álbum não encontrado" });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      for (const section of album.sections) {
+        await tx.stickerProgress.deleteMany({ where: { sectionId: section.id } });
+        if (section.count > 0) {
+          await tx.stickerProgress.createMany({
+            data: Array.from({ length: section.count }, (_, i) => ({
+              sectionId: section.id,
+              num: i + 1,
+              owned: true,
+              duplicates: 0,
+            })),
+          });
+        }
+      }
+      for (const group of album.groups) {
+        for (const team of group.teams) {
+          await tx.stickerProgress.deleteMany({ where: { teamId: team.id } });
+          if (team.count > 0) {
+            await tx.stickerProgress.createMany({
+              data: Array.from({ length: team.count }, (_, i) => ({
+                teamId: team.id,
+                num: i + 1,
+                owned: true,
+                duplicates: 0,
+              })),
+            });
+          }
+        }
+      }
+    });
+
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
 export default router;
