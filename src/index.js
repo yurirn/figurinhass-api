@@ -40,6 +40,7 @@ app.use("/teams", teamRoutes);
 app.use("/progress", progressRoutes);
 app.use("/stats", statsRoutes);
 app.use("/io", importExportRoutes);
+app.use("/public/album", shareRoutes);
 app.use("/share", shareRoutes);
 
 // Erro handler

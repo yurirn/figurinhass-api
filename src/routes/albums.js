@@ -120,8 +120,8 @@ router.delete("/:id", requireOwnedAlbum, async (req, res, next) => {
 });
 
 function buildShareUrl(token) {
-  const frontendUrl = (process.env.FRONTEND_URL || "https://figurinhass.app").replace(/\/$/, "");
-  return `${frontendUrl}/compartilhar.html?token=${token}`;
+  const apiUrl = (process.env.API_URL || process.env.RENDER_EXTERNAL_URL || "https://figurinhass-api.onrender.com").replace(/\/$/, "");
+  return `${apiUrl}/public/album/${token}`;
 }
 
 // POST /albums/:id/share — gera ou retorna link público de faltantes/repetidas
