@@ -21,6 +21,8 @@ const passwordSchema = z
   .min(6, "Senha precisa ter pelo menos 6 caracteres")
   .regex(PASSWORD_RE, "Senha deve conter apenas letras e números");
 
+const loginPasswordSchema = z.string().min(1, "Informe a senha");
+
 const RegisterSchema = z.object({
   email: z.string().email(),
   username: usernameSchema,
@@ -32,7 +34,7 @@ const LoginSchema = z
   .object({
     identifier: z.string().optional(),
     email: z.string().optional(),
-    password: passwordSchema,
+    password: loginPasswordSchema,
   })
   .refine((d) => !!(d.identifier?.trim() || d.email?.trim()), {
     message: "Informe email ou usuário",
