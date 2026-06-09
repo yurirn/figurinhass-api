@@ -11,6 +11,7 @@ import groupRoutes from "./routes/groups.js";
 import progressRoutes from "./routes/progress.js";
 import statsRoutes from "./routes/stats.js";
 import importExportRoutes from "./routes/import-export.js";
+import shareRoutes from "./routes/share.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -39,6 +40,7 @@ app.use("/teams", teamRoutes);
 app.use("/progress", progressRoutes);
 app.use("/stats", statsRoutes);
 app.use("/io", importExportRoutes);
+app.use("/share", shareRoutes);
 
 // Erro handler
 app.use((err, _req, res, _next) => {

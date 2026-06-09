@@ -78,7 +78,7 @@ router.get("/:albumId/duplicates", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-function collectList(album, kind) {
+export function collectList(album, kind) {
   const items = [];
   const collect = (count, start, progress, label, group) => {
     const owned = {}, dups = {};

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { randomBytes } from "crypto";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth, requireOwnedAlbum } from "../middleware/requireAuth.js";
@@ -114,6 +115,37 @@ router.patch("/:id", requireOwnedAlbum, async (req, res, next) => {
 router.delete("/:id", requireOwnedAlbum, async (req, res, next) => {
   try {
     await prisma.album.delete({ where: { id: req.album.id } });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+function buildShareUrl(token) {
+  const frontendUrl = (process.env.FRONTEND_URL || "https://figurinhass.app").replace(/\/$/, "");
+  return `${frontendUrl}/compartilhar.html?token=${token}`;
+}
+
+// POST /albums/:id/share — gera ou retorna link público de faltantes/repetidas
+router.post("/:id/share", requireOwnedAlbum, async (req, res, next) => {
+  try {
+    let shareToken = req.album.shareToken;
+    if (!shareToken) {
+      shareToken = randomBytes(16).toString("hex");
+      await prisma.album.update({
+        where: { id: req.album.id },
+        data: { shareToken },
+      });
+    }
+    res.json({ shareToken, url: buildShareUrl(shareToken) });
+  } catch (e) { next(e); }
+});
+
+// DELETE /albums/:id/share — revoga link público
+router.delete("/:id/share", requireOwnedAlbum, async (req, res, next) => {
+  try {
+    await prisma.album.update({
+      where: { id: req.album.id },
+      data: { shareToken: null },
+    });
     res.json({ ok: true });
   } catch (e) { next(e); }
 });
