@@ -28,16 +28,6 @@ const RegisterSchema = z.object({
   name: z.string().optional(),
 });
 
-const LoginSchema = z
-  .object({
-    password: z.string().min(1, "Senha obrigatória"),
-    identifier: z.string().optional(),
-    email: z.string().optional(),
-  })
-  .refine((d) => !!(d.identifier?.trim() || d.email?.trim()), {
-    message: "Informe email ou usuário",
-  });
-
 const ForgotSchema = z
   .object({
     identifier: z.string().optional(),
@@ -169,7 +159,6 @@ router.post("/login", async (req, res, next) => {
     setAuthCookie(res, token);
     res.json({ user: publicUser(user), token });
   } catch (e) {
-    if (e.name === "ZodError") return res.status(400).json({ error: e.errors[0].message });
     next(e);
   }
 });

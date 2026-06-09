@@ -38,13 +38,14 @@ model PasswordReset {
 // CATÁLOGO (estrutura do álbum: o que existe)
 // =================================================================
 model Album {
-  id        String   @id @default(cuid())
-  ownerId   String
-  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  name      String
-  slug      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  ownerId    String
+  owner      User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name       String
+  slug       String
+  shareToken String?  @unique   // token público para compartilhar repetidas/faltantes
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   sections  Section[]
   groups    Group[]
@@ -54,15 +55,15 @@ model Album {
 }
 
 model Section {
-  id        String   @id @default(cuid())
-  albumId   String
-  album     Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
-  key       String   // intro, venues, legends, cocacola, ou custom
-  name      String
-  count     Int      // quantidade de figurinhas
-  start     Int      @default(1) // número da 1ª figurinha
-  position  Int      @default(0) // 0..N = pre-grupos; >=1000 = pós-grupos
-  isPostGroup Boolean @default(false) // true = renderiza após grupos (cocacola)
+  id          String   @id @default(cuid())
+  albumId     String
+  album       Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  key         String   // intro, venues, legends, cocacola, ou custom
+  name        String
+  count       Int      // quantidade de figurinhas
+  start       Int      @default(1) // número da 1ª figurinha
+  position    Int      @default(0) // 0..N = pre-grupos; >=1000 = pós-grupos
+  isPostGroup Boolean  @default(false) // true = renderiza após grupos (cocacola)
 
   progress  StickerProgress[]
 
@@ -71,26 +72,26 @@ model Section {
 }
 
 model Group {
-  id        String   @id @default(cuid())
-  albumId   String
-  album     Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
-  letter    String   // A, B, C, ...
-  position  Int      @default(0)
-  teams     Team[]
+  id       String   @id @default(cuid())
+  albumId  String
+  album    Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  letter   String   // A, B, C, ...
+  position Int      @default(0)
+  teams    Team[]
 
   @@unique([albumId, letter])
   @@index([albumId])
 }
 
 model Team {
-  id        String   @id @default(cuid())
-  groupId   String
-  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  name      String   // "Brasil - BRA"
-  code      String?  // "BRA" (3 letras, para flag)
-  count     Int      @default(20)
-  start     Int      @default(1)
-  position  Int      @default(0)
+  id       String   @id @default(cuid())
+  groupId  String
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name     String   // "Brasil - BRA"
+  code     String?  // "BRA" (3 letras, para flag)
+  count    Int      @default(20)
+  start    Int      @default(1)
+  position Int      @default(0)
 
   progress  StickerProgress[]
 
